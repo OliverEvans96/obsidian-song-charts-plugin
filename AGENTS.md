@@ -1,5 +1,62 @@
 # Obsidian community plugin
 
+## TDD contract (binding)
+
+Treat this section as non-negotiable for changes in this repository.
+
+### Workflow
+
+1. **Red**: Add a **failing** automated test that specifies the desired behavior. The failure must be semantically correct (assertion or expected error), not typos, missing imports, or environment mistakes.
+2. **Green**: Make the **smallest** production change that makes the test pass.
+3. **Refactor**: Improve structure and names while keeping tests green.
+
+### Rules
+
+- **No production code without a preceding test** unless the change is purely mechanical (for example, fixing a typo in a comment) and does not alter behavior. When in doubt, add a test first.
+- **Regression tests are required** for every bug fix: reproduce the bug with a failing test, then fix.
+- **Do not** disable or skip tests to unblock work unless there is an explicit, time-bounded reason documented next to the skip and a **tracking issue reference**.
+- **Do not** lower coverage thresholds or relax lint, formatter, or type-checker configuration to pass CI.
+
+### Pre-push toolchain (this repository)
+
+Run with a locked install (`package-lock.json`):
+
+```bash
+npm ci
+npm run lint
+npm run format:check
+npm run typecheck
+npm run test:cov
+npm run build
+```
+
+Day-to-day iteration may use `npm install`; CI uses `npm ci`.
+
+### Quality bar
+
+| Requirement        | Standard |
+|--------------------|----------|
+| Formatter          | Prettier (`npm run format:check`); format is verified only in CI, not auto-fixed there |
+| Linter             | ESLint (`npm run lint`) |
+| Types              | TypeScript `tsc` on plugin sources (`tsconfig.json`) and test program (`tsconfig.tests.json` via `typecheck`) |
+| Tests              | Node.js built-in test runner; assertions on observable behavior |
+| Coverage           | `c8` + `npm run test:cov`; minimum **85%** lines/statements/functions, **80%** branches on instrumented code (see script in `package.json`) |
+
+**Coverage discipline**: cover new modules and branches with tests that assert observable behavior. If a line is genuinely impossible or unsafe to hit in tests, use a **narrow**, documented suppression on that line only.
+
+### Layout
+
+- Application code: `src/`, entry `main.ts`.
+- Tests: `tests/**/*.ts` (mirrors modules under test; currently exercises `src/smf.ts` via `tsconfig.tests.json`).
+
+### Continuous integration
+
+GitHub Actions (`.github/workflows/ci.yml`) runs the same gates as pre-push on Node 20.x and 22.x. A change is not complete until CI is green.
+
+**Summary for agents:** Write tests first. Keep types and lint clean. Meet the coverage gate. Never fix failures by weakening configuration.
+
+---
+
 ## Project overview
 
 - Target: Obsidian Community Plugin (TypeScript → bundled JavaScript).
@@ -35,10 +92,13 @@ npm run build
 
 ## Linting
 
-- To use eslint install eslint from terminal: `npm install -g eslint`
-- To use eslint to analyze this project use this command: `eslint main.ts`
-- eslint will then create a report with suggestions for code improvement by file and line number.
-- If your source code is in a folder, such as `src`, you can use eslint with this command to analyze all files in that folder: `eslint ./src/`
+Use the project scripts (see **Pre-push toolchain** above):
+
+```bash
+npm run lint
+```
+
+For file-scoped checks during development: `npx eslint path/to/file.ts`.
 
 ## File & folder conventions
 
@@ -80,6 +140,7 @@ npm run build
 
 ## Testing
 
+- Automated: `npm test` (faster) or `npm run test:cov` (coverage + thresholds). See the TDD section for required workflow in CI.
 - Manual install for testing: copy `main.js`, `manifest.json`, `styles.css` (if any) to:
   ```
   <Vault>/.obsidian/plugins/<plugin-id>/

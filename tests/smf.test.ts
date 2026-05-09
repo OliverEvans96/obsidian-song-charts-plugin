@@ -42,15 +42,11 @@ test('lineToChordproSegments attaches chords to following lyric', () => {
 });
 
 test('lineToChordproSegments stacks consecutive chords over next lyric', () => {
-	assert.deepEqual(lineToChordproSegments('[G] [D] hi'), [
-		{ chords: 'G D', lyric: ' hi' }
-	]);
+	assert.deepEqual(lineToChordproSegments('[G] [D] hi'), [{ chords: 'G D', lyric: ' hi' }]);
 });
 
 test('lineToChordproSegments trailing chord-only segment', () => {
-	assert.deepEqual(lineToChordproSegments('[G] [D]'), [
-		{ chords: 'G D', lyric: '' }
-	]);
+	assert.deepEqual(lineToChordproSegments('[G] [D]'), [{ chords: 'G D', lyric: '' }]);
 });
 
 test('mapRhythmSymbol maps strum letters', () => {
@@ -63,17 +59,39 @@ test('mapRhythmSymbol maps strum letters', () => {
 
 test('parseSlashStaffLine splits measures and maps chords to slashes', () => {
 	assert.deepEqual(parseSlashStaffLine('| G / G / | Em / Em / |'), [
-		{ beats: [{ chord: 'G' }, { chord: 'G' }] },
-		{ beats: [{ chord: 'Em' }, { chord: 'Em' }] }
+		{
+			beats: [{ chord: 'G' }, { chord: 'G' }, { chord: 'G' }, { chord: 'G' }]
+		},
+		{
+			beats: [{ chord: 'Em' }, { chord: 'Em' }, { chord: 'Em' }, { chord: 'Em' }]
+		}
+	]);
+});
+
+test('parseSlashStaffLine carries chord through slashes until next chord symbol', () => {
+	assert.deepEqual(parseSlashStaffLine('| G / / Em / |'), [
+		{
+			beats: [
+				{ chord: 'G' },
+				{ chord: 'G' },
+				{ chord: 'G' },
+				{ chord: 'Em' },
+				{ chord: 'Em' }
+			]
+		}
 	]);
 });
 
 test('parseSlashStaffLine supports lines without outer bars', () => {
-	assert.deepEqual(parseSlashStaffLine('G / G /'), [{ beats: [{ chord: 'G' }, { chord: 'G' }] }]);
+	assert.deepEqual(parseSlashStaffLine('G / / / '), [
+		{ beats: [{ chord: 'G' }, { chord: 'G' }, { chord: 'G' }, { chord: 'G' }] }
+	]);
 });
 
-test('parseSlashStaffLine yields empty when there are no slashes', () => {
-	assert.deepEqual(parseSlashStaffLine('G Em D'), []);
+test('parseSlashStaffLine maps chord-only tokens to beats without slashes', () => {
+	assert.deepEqual(parseSlashStaffLine('G Em D'), [
+		{ beats: [{ chord: 'G' }, { chord: 'Em' }, { chord: 'D' }] }
+	]);
 });
 
 test('tokenizeSlashLine classifies bars beats chords and whitespace', () => {

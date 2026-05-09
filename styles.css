@@ -103,7 +103,8 @@
 	min-width: 0;
 	text-align: center;
 	padding: 0.08em 0.1em;
-	border-inline-end: 1px solid color-mix(in srgb, var(--background-modifier-border) 38%, transparent);
+	border-inline-end: 1px solid
+		color-mix(in srgb, var(--background-modifier-border) 38%, transparent);
 }
 
 .song-strum__cell:last-child {
@@ -170,14 +171,18 @@
 }
 
 .song-slash-staff__chord {
-	font-family: "Leland Text", "Bravura Text", "Noto Music", "STIX Two Text", "Times New Roman", Times, serif;
+	font-family:
+		'Leland Text', 'Bravura Text', 'Noto Music', 'STIX Two Text', 'Times New Roman', Times,
+		serif;
 	font-size: 13px;
 	font-weight: 600;
 	fill: var(--text-normal);
 }
 
 .song-slash-staff__timesig {
-	font-family: "Leland Text", "Bravura Text", "Noto Music", "STIX Two Text", "Times New Roman", Times, serif;
+	font-family:
+		'Leland Text', 'Bravura Text', 'Noto Music', 'STIX Two Text', 'Times New Roman', Times,
+		serif;
 	font-size: 14px;
 	font-weight: 600;
 	fill: var(--text-muted);
@@ -224,7 +229,8 @@
 
 .markdown-preview-view .song-slash-staff__chord,
 .markdown-preview-view .song-slash-staff__timesig {
-	font-family: "Leland Text", "Bravura Text", "Noto Music", "STIX Two Text", "Times New Roman", Times,
+	font-family:
+		'Leland Text', 'Bravura Text', 'Noto Music', 'STIX Two Text', 'Times New Roman', Times,
 		serif !important;
 }
 

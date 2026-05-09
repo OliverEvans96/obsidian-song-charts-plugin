@@ -1,6 +1,4 @@
-export type SmfInlineToken =
-	| { type: 'text'; value: string }
-	| { type: 'chord'; value: string };
+export type SmfInlineToken = { type: 'text'; value: string } | { type: 'chord'; value: string };
 
 const ESCAPABLE = new Set(['[', ']', '|', '!', '\\']);
 
@@ -181,7 +179,8 @@ export interface SlashStaffMeasure {
 
 /**
  * Parse a slash-chart line into measures (split by `|`) and beats (each `/`).
- * Chord tokens apply to following slashes until the next chord (e.g. `G / G /`).
+ * IMPORTANT: Chord symbols count as beat 1. `G / /` = 3 beats (G on beat 1, two more beats).
+ * Standard notation: `| G / / / |` in 4/4 = chord on beat 1, plus 3 slashes = 4 total beats.
  */
 export function parseSlashStaffLine(line: string): SlashStaffMeasure[] {
 	const measures: SlashStaffMeasure[] = [];
@@ -198,7 +197,9 @@ export function parseSlashStaffLine(line: string): SlashStaffMeasure[] {
 				beats.push({ chord: currentChord });
 				continue;
 			}
+			// Chord symbol = beat 1 with that chord
 			currentChord = t;
+			beats.push({ chord: currentChord });
 		}
 		if (beats.length > 0) {
 			measures.push({ beats });

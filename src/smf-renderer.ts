@@ -19,7 +19,10 @@ function expandChordOnlyBeatColumns(segments: ChordproSegment[]): ChordproSegmen
 	if (!seg || seg.lyric !== '' || !seg.chords) {
 		return segments;
 	}
-	const parts = seg.chords.trim().split(/\s+/).filter((p) => p.length > 0);
+	const parts = seg.chords
+		.trim()
+		.split(/\s+/)
+		.filter((p) => p.length > 0);
 	if (parts.length <= 1) {
 		return segments;
 	}
@@ -128,9 +131,7 @@ function renderStrumBlock(el: HTMLElement, source: string): void {
 	const countLine = unescapeSmfText(lines[0].trim());
 	const countChars = [...countLine];
 
-	type PatternRow =
-		| { kind: 'blank' }
-		| { kind: 'pattern'; glyphs: string[] };
+	type PatternRow = { kind: 'blank' } | { kind: 'pattern'; glyphs: string[] };
 
 	const patternRows: PatternRow[] = [];
 	for (const raw of lines.slice(1)) {

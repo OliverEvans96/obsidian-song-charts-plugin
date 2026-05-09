@@ -6,10 +6,8 @@
 		"outDir": "build-tests",
 		"declaration": false,
 		"inlineSourceMap": false,
-		"inlineSources": false
+		"inlineSources": false,
+		"sourceMap": true
 	},
-	"include": [
-		"src/smf.ts",
-		"tests/**/*.ts"
-	]
+	"include": ["src/smf.ts", "tests/**/*.ts"]
 }

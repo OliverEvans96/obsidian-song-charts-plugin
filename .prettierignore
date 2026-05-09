@@ -1,0 +1,10 @@
+node_modules
+build-tests
+main.js
+dist
+package-lock.json
+*.md
+samples
+.github
+.cursor
+mcps
