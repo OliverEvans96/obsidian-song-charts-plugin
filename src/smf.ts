@@ -2,13 +2,6 @@ export type SmfInlineToken =
 	| { type: 'text'; value: string }
 	| { type: 'chord'; value: string };
 
-export type SmfDirectiveType = 'strum' | 'slash' | 'count';
-
-export interface SmfDirective {
-	type: SmfDirectiveType;
-	value: string;
-}
-
 const ESCAPABLE = new Set(['[', ']', '|', '!', '\\']);
 
 export function unescapeSmfText(value: string): string {
@@ -77,56 +70,72 @@ export function parseInlineChords(input: string): SmfInlineToken[] {
 	return tokens;
 }
 
-export function parseDirectiveLine(line: string): SmfDirective | null {
-	const trimmed = line.trim();
-	if (!trimmed.startsWith('!') || trimmed.startsWith('\\!')) {
-		return null;
-	}
+/** One lyric fragment with the chord(s) placed above its start (ChordPro-style). */
+export interface ChordproSegment {
+	chords: string | null;
+	lyric: string;
+}
 
-	const match = /^!(strum|slash|count):\s*(.*)$/i.exec(trimmed);
-	if (!match) {
-		return null;
-	}
+export function lineToChordproSegments(line: string): ChordproSegment[] {
+	const tokens = parseInlineChords(line);
+	const segments: ChordproSegment[] = [];
+	const chordStack: string[] = [];
+	let pendingWs = '';
 
-	const rawType = match[1] ?? '';
-	const rawValue = match[2] ?? '';
-	return {
-		type: rawType.toLowerCase() as SmfDirectiveType,
-		value: unescapeSmfText(rawValue),
+	const flushChordsIntoNextText = (lyric: string) => {
+		const chords = chordStack.length > 0 ? chordStack.join(' ') : null;
+		chordStack.length = 0;
+		segments.push({ chords, lyric });
 	};
-}
 
-export interface SmfRepeatLine {
-	level: number;
-	content: string;
-}
-
-export function parseRepeatLine(line: string): SmfRepeatLine | null {
-	let index = 0;
-
-	while (index < line.length && /\s/.test(line.charAt(index))) {
-		index++;
-	}
-
-	if (index >= line.length || line[index] !== '|') {
-		return null;
-	}
-
-	let level = 0;
-	while (index < line.length && line[index] === '|') {
-		level++;
-		index++;
-		while (index < line.length && /\s/.test(line.charAt(index))) {
-			index++;
+	for (const token of tokens) {
+		if (token.type === 'chord') {
+			chordStack.push(token.value);
+			continue;
 		}
+
+		const lyric = token.value;
+
+		if (/^\s*$/.test(lyric) && chordStack.length > 0) {
+			pendingWs += lyric;
+			continue;
+		}
+
+		pendingWs = '';
+		flushChordsIntoNextText(lyric);
 	}
 
-	return {
-		level,
-		content: unescapeSmfText(line.slice(index)),
-	};
+	if (chordStack.length > 0) {
+		const lyric = /^\s*$/.test(pendingWs) ? '' : pendingWs;
+		flushChordsIntoNextText(lyric);
+	}
+
+	return segments;
 }
 
-export function isShorthandRepeat(line: string): boolean {
-	return /^\s*\|:.*:\|\s*$/.test(line);
+/** Maps strum/slash ASCII stroke letters to arrows; spacing and bar characters pass through. */
+export function mapRhythmSymbol(ch: string): string {
+	const u = ch.toUpperCase();
+	switch (u) {
+		case 'D':
+			return '↓';
+		case 'U':
+			return '↑';
+		case 'X':
+			return '✕';
+		case '-':
+			return '·';
+		case 'T':
+			return '⊤';
+		default:
+			return ch;
+	}
+}
+
+export function mapRhythmAsciiLine(line: string): string {
+	let out = '';
+	for (const ch of line) {
+		out += mapRhythmSymbol(ch);
+	}
+	return out;
 }

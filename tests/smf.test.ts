@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
-	isShorthandRepeat,
-	parseDirectiveLine,
+	lineToChordproSegments,
+	mapRhythmAsciiLine,
+	mapRhythmSymbol,
 	parseInlineChords,
-	parseRepeatLine,
 	unescapeSmfText
 } from '../src/smf.js';
 
@@ -32,51 +32,35 @@ test('parseInlineChords handles unmatched and empty brackets as plain text', () 
 	]);
 });
 
-test('parseDirectiveLine parses supported inline directives', () => {
-	assert.deepEqual(parseDirectiveLine('!strum: D - D U - U D U'), {
-		type: 'strum',
-		value: 'D - D U - U D U'
-	});
-	assert.deepEqual(parseDirectiveLine('!slash: | ↓ ↓ ↑ ↑ ↓ ↑ |'), {
-		type: 'slash',
-		value: '| ↓ ↓ ↑ ↑ ↓ ↑ |'
-	});
-	assert.deepEqual(parseDirectiveLine('!count: 1 & 2 & 3 & 4 &'), {
-		type: 'count',
-		value: '1 & 2 & 3 & 4 &'
-	});
+test('lineToChordproSegments attaches chords to following lyric', () => {
+	assert.deepEqual(lineToChordproSegments('[G]Hello [D]world'), [
+		{ chords: 'G', lyric: 'Hello ' },
+		{ chords: 'D', lyric: 'world' }
+	]);
 });
 
-test('parseDirectiveLine ignores escaped directives', () => {
-	assert.equal(parseDirectiveLine('\\!strum: D U D U'), null);
-	assert.deepEqual(parseDirectiveLine('!count: 1 \\& 2 \\! 3'), {
-		type: 'count',
-		value: '1 \\& 2 ! 3'
-	});
+test('lineToChordproSegments stacks consecutive chords over next lyric', () => {
+	assert.deepEqual(lineToChordproSegments('[G] [D] hi'), [
+		{ chords: 'G D', lyric: ' hi' }
+	]);
 });
 
-test('parseRepeatLine parses nesting levels from leading pipes', () => {
-	assert.deepEqual(parseRepeatLine('| | | [C]Inner A'), {
-		level: 3,
-		content: '[C]Inner A'
-	});
-	assert.deepEqual(parseRepeatLine('| repeat: 2'), {
-		level: 1,
-		content: 'repeat: 2'
-	});
-	assert.deepEqual(parseRepeatLine('|'), {
-		level: 1,
-		content: ''
-	});
-	assert.deepEqual(parseRepeatLine('| \\| literal \\! value'), {
-		level: 1,
-		content: '| literal ! value'
-	});
+test('lineToChordproSegments trailing chord-only segment', () => {
+	assert.deepEqual(lineToChordproSegments('[G] [D]'), [
+		{ chords: 'G D', lyric: '' }
+	]);
 });
 
-test('repeat shorthand is recognized', () => {
-	assert.equal(isShorthandRepeat('|: [G]Hello [D]world :|'), true);
-	assert.equal(isShorthandRepeat('| [G]Hello [D]world'), false);
+test('mapRhythmSymbol maps strum letters', () => {
+	assert.equal(mapRhythmSymbol('D'), '↓');
+	assert.equal(mapRhythmSymbol('u'), '↑');
+	assert.equal(mapRhythmSymbol('X'), '✕');
+	assert.equal(mapRhythmSymbol('-'), '·');
+	assert.equal(mapRhythmSymbol('/'), '/');
+});
+
+test('mapRhythmAsciiLine converts each stroke character', () => {
+	assert.equal(mapRhythmAsciiLine('D - D U'), '↓ · ↓ ↑');
 });
 
 test('unescapeSmfText handles escaped control characters', () => {

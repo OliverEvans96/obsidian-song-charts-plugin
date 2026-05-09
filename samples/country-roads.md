@@ -12,34 +12,40 @@ tuning: standard
 
 > Key of G — moderate country feel
 
-!strum: D - D U - U D U
-!count: 1 & 2 & 3 & 4 &
+```strum
+1 & 2 & 3 & 4 &
+D - D U - U D U
+```
 
 ---
 
 # Intro
 
-|: [G] [G] [Em] [Em] [D] [D] [G] [G] :|
+```chordpro
+[G] [G] [Em] [Em] [D] [D] [G] [G]
+```
 
 ---
 
 # Verse 1
 
-| [G]Almost heaven, [D]West Vir-[Em]ginia
-| [C]Blue Ridge Mountains, [G]Shenandoah [D]River
-| [G]Life is old there, [D]older than the [Em]trees
-| [C]Younger than the mountains, [D]blowing like a [G]breeze
-|
+```chordpro
+[G]Almost heaven, [D]West Vir-[Em]ginia
+[C]Blue Ridge Mountains, [G]Shenandoah [D]River
+[G]Life is old there, [D]older than the [Em]trees
+[C]Younger than the mountains, [D]blowing like a [G]breeze
+```
 
 ---
 
 # Chorus
 
-|| [G]Take me home, [D]country roads
-|| [Em]To the place [C]I belong
-|| [G]West Virginia, [D]mountain mama
-|| [Em]Take me home, [C]country [G]roads
-||
+```chordpro
+[G]Take me home, [D]country roads
+[Em]To the place [C]I belong
+[G]West Virginia, [D]mountain mama
+[Em]Take me home, [C]country [G]roads
+```
 
 > Big strums — let chords ring on "roads" and "home"
 
@@ -47,39 +53,44 @@ tuning: standard
 
 # Verse 2
 
-| [G]All my memories [D]gather 'round [Em]her
-| [C]Miner's lady, [G]stranger to blue [D]water
-| [G]Dark and dusty, [D]painted on the [Em]sky
-| [C]Misty taste of moonshine, [D]teardrop in my [G]eye
-|
+```chordpro
+[G]All my memories [D]gather 'round [Em]her
+[C]Miner's lady, [G]stranger to blue [D]water
+[G]Dark and dusty, [D]painted on the [Em]sky
+[C]Misty taste of moonshine, [D]teardrop in my [G]eye
+```
 
 ---
 
 # Chorus
 
-|| [G]Take me home, [D]country roads
-|| [Em]To the place [C]I belong
-|| [G]West Virginia, [D]mountain mama
-|| [Em]Take me home, [C]country [G]roads
-||
+```chordpro
+[G]Take me home, [D]country roads
+[Em]To the place [C]I belong
+[G]West Virginia, [D]mountain mama
+[Em]Take me home, [C]country [G]roads
+```
 
 ---
 
 # Bridge
 
-| [Em]I hear her [D]voice in the morning [G]hour she calls me
-| [C]The radio re-[G]minds me of my [D]home far away
-| [Em]And drivin' [D]down the road I get a [G]feeling
-| [C]That I should have been home [D]yesterday, yes-ter-[G]day
-|
+```chordpro
+[Em]I hear her [D]voice in the morning [G]hour she calls me
+[C]The radio re-[G]minds me of my [D]home far away
+[Em]And drivin' [D]down the road I get a [G]feeling
+[C]That I should have been home [D]yesterday, yes-ter-[G]day
+```
 
 ---
 
 # Outro (Chorus — repeat and fade)
 
-|: [G]Take me home, [D]country roads
-|: [Em]To the place [C]I belong
-|: [G]West Virginia, [D]mountain mama
-|: [Em]Take me home, [C]country [G]roads :|
+```chordpro
+[G]Take me home, [D]country roads
+[Em]To the place [C]I belong
+[G]West Virginia, [D]mountain mama
+[Em]Take me home, [C]country [G]roads
+```
 
 > Repeat and fade — add vocal "country roads" ad libs over [G]

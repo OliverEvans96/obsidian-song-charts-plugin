@@ -1,189 +1,118 @@
 import { Plugin } from 'obsidian';
 import {
-	isShorthandRepeat,
-	parseDirectiveLine,
+	lineToChordproSegments,
+	mapRhythmAsciiLine,
 	parseInlineChords,
-	parseRepeatLine,
-	type SmfDirective
+	type ChordproSegment,
+	unescapeSmfText
 } from './smf';
 
-function appendInlineContent(container: HTMLElement, text: string): void {
+/** Chord-only lines split into columns (one chord per beat cell). */
+function expandChordOnlyBeatColumns(segments: ChordproSegment[]): ChordproSegment[] {
+	if (segments.length !== 1) {
+		return segments;
+	}
+	const seg = segments[0];
+	if (!seg || seg.lyric !== '' || !seg.chords) {
+		return segments;
+	}
+	const parts = seg.chords.trim().split(/\s+/).filter((p) => p.length > 0);
+	if (parts.length <= 1) {
+		return segments;
+	}
+	return parts.map((chords) => ({ chords, lyric: '' }));
+}
+
+function appendChordproLyricTokens(container: HTMLElement, text: string): void {
 	for (const token of parseInlineChords(text)) {
 		if (token.type === 'text') {
 			container.appendText(token.value);
 			continue;
 		}
-
-		const chord = container.createSpan({ cls: 'song-chord' });
+		const chord = container.createSpan({ cls: 'song-chordpro-inline-chord' });
 		chord.setText(token.value);
 	}
 }
 
-function renderDirective(container: HTMLElement, directive: SmfDirective): void {
-	container.empty();
-	container.addClass('song-directive');
-	container.addClass(`song-directive--${directive.type}`);
+function renderChordproLine(row: HTMLElement, rawLine: string): void {
+	const line = unescapeSmfText(rawLine);
+	const segments = expandChordOnlyBeatColumns(lineToChordproSegments(line));
 
-	const label = container.createSpan({ cls: 'song-directive__label' });
-	label.setText(directive.type);
-
-	const value = container.createSpan({ cls: 'song-directive__value' });
-	value.setText(directive.value);
-}
-
-function renderRepeatBlock(container: HTMLElement): boolean {
-	const lines = container.innerText.split('\n');
-	if (lines.length === 0) {
-		return false;
-	}
-
-	const isRepeatRegion = lines.every((line) => {
-		if (line.trim().length === 0) {
-			return true;
+	row.empty();
+	for (const seg of segments) {
+		const cell = row.createSpan({ cls: 'song-chordpro-seg' });
+		const chordRow = cell.createSpan({ cls: 'song-chordpro-chord-row' });
+		if (seg.chords) {
+			chordRow.setText(seg.chords);
+		} else {
+			chordRow.addClass('song-chordpro-chord-row--empty');
+			chordRow.setText('\u00a0');
 		}
-
-		return parseRepeatLine(line) !== null || isShorthandRepeat(line);
-	});
-
-	if (!isRepeatRegion) {
-		return false;
-	}
-
-	const parsedLines = lines.map((line) => parseRepeatLine(line));
-
-	container.empty();
-	container.addClass('song-repeat');
-
-	for (const [index, line] of lines.entries()) {
-		const shorthand = isShorthandRepeat(line);
-		const parsed = parsedLines[index];
-		const row = container.createDiv({ cls: 'song-repeat__line' });
-
-		if (shorthand) {
-			row.addClass('song-repeat__line--shorthand');
-			appendInlineContent(row, line.trim().slice(2, -2).trim());
-			continue;
-		}
-
-		if (!parsed) {
-			continue;
-		}
-
-		if (parsed.content.trim().length === 0) {
-			row.addClass('song-repeat__line--empty');
-			continue;
-		}
-
-		row.style.paddingInlineStart = `${Math.max(parsed.level - 1, 0) * 1.25}rem`;
-
-		const directive = parseDirectiveLine(parsed.content);
-		if (directive) {
-			renderDirective(row, directive);
-			continue;
-		}
-
-		appendInlineContent(row, parsed.content);
-	}
-
-	return true;
-}
-
-function shouldSkipTextNode(node: Text): boolean {
-	const parent = node.parentElement;
-	if (!parent) {
-		return true;
-	}
-
-	if (
-		parent.closest('.song-directive, .song-repeat, .song-chord') ||
-		parent.closest('code, pre, a')
-	) {
-		return true;
-	}
-
-	return false;
-}
-
-function renderInlineChords(container: HTMLElement): void {
-	const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
-	const nodes: Text[] = [];
-
-	while (walker.nextNode()) {
-		const current = walker.currentNode as Text;
-		if (shouldSkipTextNode(current)) {
-			continue;
-		}
-
-		const text = current.nodeValue ?? '';
-		if (!/[[\\]/.test(text)) {
-			continue;
-		}
-
-		nodes.push(current);
-	}
-
-	for (const node of nodes) {
-		const text = node.nodeValue ?? '';
-		const tokens = parseInlineChords(text);
-		if (!tokens.some((token) => token.type === 'chord')) {
-			continue;
-		}
-
-		const fragment = document.createDocumentFragment();
-		for (const token of tokens) {
-			if (token.type === 'text') {
-				fragment.append(token.value);
-				continue;
-			}
-
-			const chord = document.createElement('span');
-			chord.addClass('song-chord');
-			chord.setText(token.value);
-			fragment.append(chord);
-		}
-
-		node.replaceWith(fragment);
+		const lyricRow = cell.createSpan({ cls: 'song-chordpro-lyric-row' });
+		appendChordproLyricTokens(lyricRow, seg.lyric);
 	}
 }
 
-function processParagraphs(container: HTMLElement): void {
-	const blocks = Array.from(container.querySelectorAll('p, li, blockquote p'));
-	for (const block of blocks) {
-		if (!(block instanceof HTMLElement)) {
+function renderChordproBlock(el: HTMLElement, source: string): void {
+	const root = el.createDiv({ cls: 'song-chordpro' });
+	for (const rawLine of source.split(/\r?\n/)) {
+		if (!rawLine.trim()) {
+			root.createDiv({ cls: 'song-chordpro-line song-chordpro-line--empty' });
 			continue;
 		}
-
-		if (renderRepeatBlock(block)) {
-			continue;
-		}
-
-		const directive = parseDirectiveLine(block.innerText);
-		if (!directive) {
-			continue;
-		}
-
-		renderDirective(block, directive);
+		renderChordproLine(root.createDiv({ cls: 'song-chordpro-line' }), rawLine);
 	}
 }
 
-function registerFencedProcessor(plugin: Plugin, type: SmfDirective['type']): void {
-	plugin.registerMarkdownCodeBlockProcessor(type, (source, el) => {
-		const wrapper = el.createDiv({ cls: `song-directive song-directive--${type}` });
-		const label = wrapper.createSpan({ cls: 'song-directive__label' });
-		label.setText(type);
+/** Line 1 = count; remaining lines = ASCII strum pattern (D/U/X/-/T → glyphs). */
+function renderStrumBlock(el: HTMLElement, source: string): void {
+	const lines = source.split(/\r?\n/);
+	const root = el.createDiv({ cls: 'song-strum' });
 
-		const value = wrapper.createSpan({ cls: 'song-directive__value' });
-		value.setText(source.trim());
-	});
+	if (lines.length === 0 || !lines[0]?.trim()) {
+		root.addClass('song-block-invalid');
+		root.setText('Strum block needs a first line for the count (e.g. 1 & 2 & 3 & 4 &).');
+		return;
+	}
+
+	const countEl = root.createDiv({ cls: 'song-strum__count' });
+	countEl.setText(lines[0].trim());
+
+	for (const raw of lines.slice(1)) {
+		if (!raw.trim()) {
+			root.createDiv({ cls: 'song-strum__pattern song-strum__pattern--empty' });
+			continue;
+		}
+		const patternEl = root.createDiv({ cls: 'song-strum__pattern' });
+		patternEl.setText(mapRhythmAsciiLine(raw));
+	}
+}
+
+/** Slash rhythm: ASCII stroke letters become arrows; slashes and bars preserved. */
+function renderSlashBlock(el: HTMLElement, source: string): void {
+	const root = el.createDiv({ cls: 'song-slash' });
+	const body = root.createDiv({ cls: 'song-slash__body' });
+
+	for (const raw of source.split(/\r?\n/)) {
+		if (!raw.trim()) {
+			body.createDiv({ cls: 'song-slash__line song-slash__line--empty' });
+			continue;
+		}
+		const lineEl = body.createDiv({ cls: 'song-slash__line' });
+		lineEl.setText(mapRhythmAsciiLine(raw));
+	}
 }
 
 export function registerSmfProcessors(plugin: Plugin): void {
-	registerFencedProcessor(plugin, 'strum');
-	registerFencedProcessor(plugin, 'slash');
-	registerFencedProcessor(plugin, 'count');
+	plugin.registerMarkdownCodeBlockProcessor('chordpro', (source, el) => {
+		renderChordproBlock(el, source);
+	});
 
-	plugin.registerMarkdownPostProcessor((el) => {
-		processParagraphs(el);
-		renderInlineChords(el);
+	plugin.registerMarkdownCodeBlockProcessor('strum', (source, el) => {
+		renderStrumBlock(el, source);
+	});
+
+	plugin.registerMarkdownCodeBlockProcessor('slash', (source, el) => {
+		renderSlashBlock(el, source);
 	});
 }

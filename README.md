@@ -1,26 +1,18 @@
 # Song Charts for Obsidian
 
-An Obsidian community plugin that renders **Song Markdown Format (SMF) v2.0** syntax in Reading view.
+An Obsidian community plugin that renders **Song Markdown Format (SMF) v2.0** inside three fenced code blocks — **`chordpro`**, **`strum`**, and **`slash`** — in Reading view. Normal Markdown is unchanged.
 
 ## What this plugin renders
 
-- Inline chords: `[G]Hello [D]world`
-- Inline directives:
-  - `!strum: D - D U - U D U`
-  - `!slash: | / / / / |`
-  - `!count: 1 & 2 & 3 & 4 &`
-- Repeat regions with pipe prefixes:
-  - `| ...`
-  - nested `| | ...`
-  - shorthand `|: ... :|`
-- Fenced blocks:
-  - ```` ```strum ``` ````
-  - ```` ```slash ``` ````
-  - ```` ```count ``` ````
-- Escape sequences:
-  - `\[`, `\|`, `\!`
+| Block tag    | Purpose |
+| ------------ | ------- |
+| **`chordpro`** | ChordPro-style `[G]` lines with **chords above lyrics**, aligned per syllable or chord-only beats |
+| **`strum`**    | **Line 1** is always the **count**; following lines are ASCII strum strokes rendered as **arrows** |
+| **`slash`**    | Slash rhythm (ASCII); stroke letters `D`/`U`/`X`/`-`/`T` become glyphs like strum; `/` and `\|` stay as written |
 
-The source file remains valid Markdown with YAML frontmatter support unchanged.
+Escape sequences inside block bodies: `\[`, `\|`, `\!`
+
+YAML frontmatter stays normal Markdown and is not parsed by this plugin.
 
 ## Development
 
@@ -40,404 +32,90 @@ npm run build
 
 ## Example
 
-```md
+````md
 ---
 title: Example Song
 artist: Demo
 tempo: 100
 ---
 
-# Verse
-
-| # Verse 1
-| [G]Hello [D]world
-| [C]This is simple
-|
-
-!strum: D D U U D U
-
-[C]Sing it loud
-[G]Sing it proud
-
-> Let it ring
+```strum
+1 & 2 & 3 & 4 &
+D - D U - U D U
 ```
 
-## Song Markdown Format (SMF) v2.0 — Full specification
+```chordpro
+[G]Hello [D]world
+[C]This is simple
+```
 
-A Markdown-compatible format for song sheets with:
+```slash
+| / / / / |
+```
 
-- YAML frontmatter metadata
-- inline chords (ChordPro-style)
-- strumming notation (DUX-style, unnamed externally)
-- slash rhythm notation
-- repeatable sections via Markdown-native markers
-- notes + hints
-- optional fenced music blocks for structured rhythm data
-
-It is a **strict subset of Markdown** with a few defined extensions.
+> Performance notes in normal Markdown
+````
 
 ---
 
-### 1. File Structure
+## Song Markdown Format (SMF) v2.0 — Specification
 
-A valid SMF file is standard Markdown:
+SMF is ordinary Markdown plus optional fenced islands using exactly these language tags.
+
+### 1. File structure
 
 ```text
 ---
-(frontmatter YAML)
+(YAML frontmatter)
 ---
 
 (markdown body)
 ```
 
-Everything outside frontmatter is Markdown text.
+### 2. Frontmatter
 
----
+Optional YAML (`title`, `artist`, `tempo`, `key`, etc.). Valid YAML only.
 
-### 2. Frontmatter (YAML only)
+### 3. `chordpro` blocks
 
-Standard YAML block.
+Body = one lyric line per row (newline-separated). Chords use `[Name]` immediately before the lyric fragment they sit above.
 
-```yaml
----
-title: Fast Car
-artist: Tracy Chapman
-tempo: 104
-time: 4/4
-key: C
-capo: 2
-tuning: standard
----
-```
+- Several chords in a row with only spaces between them stack over the **next** lyric token (`[G] [D] hello`).
+- A **chord-only** line (only chords and spaces, e.g. an intro figure) is split into **one column per chord** so beats line up horizontally.
+- Nested `[brackets]` inside lyrics must be escaped: `\[`.
 
-Rules:
+### 4. `strum` blocks
 
-- valid YAML only
-- no custom syntax allowed
-- all metadata is optional
+- **First line (required):** count string, e.g. `1 & 2 & 3 & 4 &`. Shown as the subdivision guide.
+- **Following lines:** ASCII pattern. Characters are mapped when rendered:
 
----
+| ASCII | Shown as |
+| ----- | -------- |
+| `D`   | ↓ (down) |
+| `U`   | ↑ (up)   |
+| `X`   | ✕        |
+| `-`   | · (rest) |
+| `T`   | ⊤ (tap)  |
 
-### 3. Markdown Base Layer
+Spaces are preserved for alignment. Extra blank lines become vertical spacing.
 
-SMF is fully valid Markdown:
+### 5. `slash` blocks
 
-- headings
-- paragraphs
-- blockquotes
-- lists
+Slash charts: use `/`, bar lines `|`, and optional stroke letters. The same **`D`/`U`/`X`/`-`/`T` → glyph** mapping applies so you can type ASCII and read arrows.
 
-Example:
-
-```md
-# Verse 1
-
-This is a normal paragraph.
-```
-
----
-
-### 4. Chords (Inline Only)
-
-ChordPro-style inline chords:
-
-```md
-[G]Hello darkness my old [D]friend
-```
-
-Rules:
-
-- chords appear in `[...]`
-- attach to next lyric fragment
-- multiple chords per line allowed
-
-Chord-only lines allowed:
-
-```md
-[G]   [D]   [Em]   [C]
-```
-
----
-
-### 5. Strumming Notation (Inline Convention)
-
-Strumming is represented as **inline monospaced text or fenced line starting with `!strum:`**.
-
-#### 5.1 Inline form (preferred for simplicity)
-
-```md
-!strum: D - D U - U D U
-```
-
-#### 5.2 Meaning
-
-| Symbol | Meaning    |
-| ------ | ---------- |
-| D      | downstroke |
-| U      | upstroke   |
-| X      | muted hit  |
-| -      | rest       |
-| T      | tap / percussion |
-
-Rules:
-
-- spacing is visual only
-- timing is implied by alignment or context
-
----
-
-### 6. Slash Rhythm Notation
-
-Used for traditional chart feel.
-
-Inline directive form:
-
-```md
-!slash: | / / / / |
-```
-
-Or directional:
-
-```md
-!slash: | ↓ ↓ ↑ ↑ ↓ ↑ |
-```
-
-Rules:
-
-- must be inside a `!slash:` line
-- bar symbols optional but recommended
-
----
-
-### 7. Count Guide (Optional)
-
-```md
-!count: 1 & 2 & 3 & 4 &
-```
-
-Used for alignment reference only.
-
----
-
-### 8. Notes
-
-Standard Markdown blockquote:
-
-```md
-> Play softly here
-> Build into chorus
-```
-
-Rules:
-
-- purely informational
-- ignored by playback engines unless explicitly interpreted
-
----
-
-### 9. Sections
-
-Standard Markdown headings:
-
-```md
-# Intro
-# Verse 1
-## Pre-Chorus
-# Chorus
-```
-
-No custom section syntax.
-
----
-
-### 10. Repeat System (Markdown-native)
-
-Repeats are expressed using **blockquote-style structural bars (`|`)**.
-
-This is the only structural extension to Markdown.
-
-#### 10.1 Basic Repeat Block
-
-```md
-| # Verse 1
-| [G]Hello [D]world
-| [C]Another line
-|
-```
-
-Meaning:
-
-- `|` prefixes define a repeatable region
-- blank `|` ends region
-- region is repeated based on optional directive or default behavior
-
-#### 10.2 Repeat Count
-
-Placed immediately after header or inside block:
-
-```md
-| # Chorus
-| repeat: 2
-| [C]Sing it loud
-| [G]Sing it proud
-|
-```
-
-#### 10.3 Nested Repeats
-
-Indentation determines nesting:
-
-```md
-| # Section
-| | [G]Outer line
-| | [D]Outer line
-| |
-| | # Inner repeat
-| | | [C]Inner A
-| | | [D]Inner B
-| | |
-```
-
-Rules:
-
-- each leading `|` = one nesting level
-- inner blocks repeat independently
-
-#### 10.4 Alternative shorthand repeat
-
-```md
-|: [G]Hello [D]world :|
-```
-
-Equivalent to a repeat block.
-
----
-
-### 11. Fenced Music Blocks (Optional, structured data)
-
-Only used when structure is needed.
-
-#### 11.1 Strumming block
-
-````text
-```strum
-D - D U - U D U
-```
-````
-
-#### 11.2 Slash block
-
-````text
-```slash
-| ↓ ↓ ↑ ↑ ↓ ↑ |
-```
-````
-
-#### 11.3 Count block
-
-````text
-```count
-1 & 2 & 3 & 4 &
-```
-````
-
-Rules:
-
-- fenced blocks are optional
-- inline forms are preferred
-- blocks are for tooling / UI rendering
-
----
-
-### 12. Line Processing Rules
-
-Order of interpretation:
-
-1. YAML frontmatter
-2. Markdown structure
-3. repeat regions (`|`)
-4. inline chords
-5. inline directives (`!strum`, `!slash`, `!count`)
-6. notes (`>`)
-7. fenced blocks
-
----
-
-### 13. Semantics of Repeat Regions
-
-A repeat region:
-
-- begins with `|`
-- ends with blank `|`
-- may contain nested `|`
-- expands logically before rendering
-
-No required runtime behavior; expansion is UI-defined.
-
----
-
-### 14. Escape Rules
-
-Inside lyric text:
+### 6. Escapes (inside fenced bodies)
 
 | Sequence | Meaning |
 | -------- | ------- |
-| `\[ ]`   | literal chord brackets |
-| `\|`     | literal pipe |
-| `\!`     | literal directive |
+| `\[ ]`   | Literal brackets |
+| `\|`     | Literal pipe |
+| `\!`     | Literal `!` |
 
----
+### 7. Processing
 
-### 15. Minimal Example
+Obsidian renders Markdown; this plugin registers markdown **code block processors** for `chordpro`, `strum`, and `slash` so those fences render as song-chart UI instead of plain code.
 
-```yaml
----
-title: Example Song
-artist: Demo
-tempo: 100
----
-```
+### 8. Non-goals
 
-```md
-# Verse
-
-| # Verse 1
-| [G]Hello [D]world
-| [C]This is simple
-|
-```
-
-```md
-# Chorus
-
-!strum: D D U U D U
-
-[C]Sing it loud
-[G]Sing it proud
-
-> Let it ring
-```
-
----
-
-### 16. Design Principles
-
-- Markdown is the base language (no fork)
-- YAML only for metadata
-- no hidden syntax layers
-- repetition uses visual structure, not new grammar
-- inline-first design (blocks are optional)
-- readable without parser
-- parseable without ambiguity
-
----
-
-### 17. Non-Goals
-
-This format explicitly avoids:
-
-- separate DSLs
-- non-Markdown files
-- required AST tooling
-- binary or encoded structures
-- hidden state machines
+- No chord or rhythm syntax interpreted **outside** these three fences.
+- No audio playback in this plugin.
