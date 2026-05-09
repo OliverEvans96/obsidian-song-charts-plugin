@@ -113,7 +113,7 @@ export function lineToChordproSegments(line: string): ChordproSegment[] {
 	return segments;
 }
 
-/** Maps strum/slash ASCII stroke letters to arrows; spacing and bar characters pass through. */
+/** Maps strum ASCII stroke letters to arrows; spacing and bar characters pass through. */
 export function mapRhythmSymbol(ch: string): string {
 	const u = ch.toUpperCase();
 	switch (u) {
@@ -132,10 +132,77 @@ export function mapRhythmSymbol(ch: string): string {
 	}
 }
 
+/** Used for strum pattern rows only; slash blocks render chord lines literally. */
 export function mapRhythmAsciiLine(line: string): string {
 	let out = '';
 	for (const ch of line) {
 		out += mapRhythmSymbol(ch);
 	}
 	return out;
+}
+
+export type SlashLineTokenKind = 'whitespace' | 'beat' | 'bar' | 'chord';
+
+export type SlashLineToken = { kind: SlashLineTokenKind; text: string };
+
+/** Split a slash-chart line into runs (whitespace preserved) for styled rendering. */
+export function tokenizeSlashLine(line: string): SlashLineToken[] {
+	const parts = line.split(/(\s+)/);
+	const out: SlashLineToken[] = [];
+	for (const part of parts) {
+		if (!part) {
+			continue;
+		}
+		if (/^\s+$/.test(part)) {
+			out.push({ kind: 'whitespace', text: part });
+			continue;
+		}
+		if (part === '/') {
+			out.push({ kind: 'beat', text: part });
+			continue;
+		}
+		if (/^\|+$/.test(part)) {
+			out.push({ kind: 'bar', text: part });
+			continue;
+		}
+		out.push({ kind: 'chord', text: part });
+	}
+	return out;
+}
+
+/** One slash stroke on the staff; optional chord written above it. */
+export interface SlashStaffBeat {
+	chord: string | null;
+}
+
+export interface SlashStaffMeasure {
+	beats: SlashStaffBeat[];
+}
+
+/**
+ * Parse a slash-chart line into measures (split by `|`) and beats (each `/`).
+ * Chord tokens apply to following slashes until the next chord (e.g. `G / G /`).
+ */
+export function parseSlashStaffLine(line: string): SlashStaffMeasure[] {
+	const measures: SlashStaffMeasure[] = [];
+	const chunks = line
+		.split('|')
+		.map((s) => s.trim())
+		.filter((s) => s.length > 0);
+	for (const chunk of chunks) {
+		const tokens = chunk.split(/\s+/).filter((t) => t.length > 0);
+		let currentChord: string | null = null;
+		const beats: SlashStaffBeat[] = [];
+		for (const t of tokens) {
+			if (t === '/') {
+				beats.push({ chord: currentChord });
+				continue;
+			}
+			currentChord = t;
+		}
+		if (beats.length > 0) {
+			measures.push({ beats });
+		}
+	}
+	return measures;
 }

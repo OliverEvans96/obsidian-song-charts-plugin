@@ -5,6 +5,8 @@ import {
 	mapRhythmAsciiLine,
 	mapRhythmSymbol,
 	parseInlineChords,
+	parseSlashStaffLine,
+	tokenizeSlashLine,
 	unescapeSmfText
 } from '../src/smf.js';
 
@@ -59,8 +61,57 @@ test('mapRhythmSymbol maps strum letters', () => {
 	assert.equal(mapRhythmSymbol('/'), '/');
 });
 
+test('parseSlashStaffLine splits measures and maps chords to slashes', () => {
+	assert.deepEqual(parseSlashStaffLine('| G / G / | Em / Em / |'), [
+		{ beats: [{ chord: 'G' }, { chord: 'G' }] },
+		{ beats: [{ chord: 'Em' }, { chord: 'Em' }] }
+	]);
+});
+
+test('parseSlashStaffLine supports lines without outer bars', () => {
+	assert.deepEqual(parseSlashStaffLine('G / G /'), [{ beats: [{ chord: 'G' }, { chord: 'G' }] }]);
+});
+
+test('parseSlashStaffLine yields empty when there are no slashes', () => {
+	assert.deepEqual(parseSlashStaffLine('G Em D'), []);
+});
+
+test('tokenizeSlashLine classifies bars beats chords and whitespace', () => {
+	assert.deepEqual(tokenizeSlashLine('| G / G / |'), [
+		{ kind: 'bar', text: '|' },
+		{ kind: 'whitespace', text: ' ' },
+		{ kind: 'chord', text: 'G' },
+		{ kind: 'whitespace', text: ' ' },
+		{ kind: 'beat', text: '/' },
+		{ kind: 'whitespace', text: ' ' },
+		{ kind: 'chord', text: 'G' },
+		{ kind: 'whitespace', text: ' ' },
+		{ kind: 'beat', text: '/' },
+		{ kind: 'whitespace', text: ' ' },
+		{ kind: 'bar', text: '|' }
+	]);
+});
+
+test('tokenizeSlashLine keeps slash chords and double bars as single tokens', () => {
+	assert.deepEqual(tokenizeSlashLine('|| G/B '), [
+		{ kind: 'bar', text: '||' },
+		{ kind: 'whitespace', text: ' ' },
+		{ kind: 'chord', text: 'G/B' },
+		{ kind: 'whitespace', text: ' ' }
+	]);
+});
+
 test('mapRhythmAsciiLine converts each stroke character', () => {
 	assert.equal(mapRhythmAsciiLine('D - D U'), '↓ · ↓ ↑');
+});
+
+test('unescapeSmfText applies escapes in slash chart lines', () => {
+	assert.equal(unescapeSmfText('\\| G / G / \\| D / D / \\|'), '| G / G / | D / D / |');
+});
+
+test('mapRhythmAsciiLine is for strum patterns only (not slash chord lines)', () => {
+	const slashLine = '| G / G / | D / D / |';
+	assert.notEqual(mapRhythmAsciiLine(slashLine), slashLine);
 });
 
 test('unescapeSmfText handles escaped control characters', () => {

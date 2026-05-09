@@ -1,12 +1,14 @@
 import { Plugin } from 'obsidian';
 import {
 	lineToChordproSegments,
-	mapRhythmAsciiLine,
 	mapRhythmSymbol,
 	parseInlineChords,
+	parseSlashStaffLine,
+	tokenizeSlashLine,
 	type ChordproSegment,
 	unescapeSmfText
 } from './smf';
+import { createSlashStaffSvg } from './slash-staff';
 
 /** Chord-only lines split into columns (one chord per beat cell). */
 function expandChordOnlyBeatColumns(segments: ChordproSegment[]): ChordproSegment[] {
@@ -184,7 +186,23 @@ function renderStrumBlock(el: HTMLElement, source: string): void {
 	}
 }
 
-/** Slash rhythm: ASCII stroke letters become arrows; slashes and bars preserved. */
+function appendSlashLine(lineEl: HTMLElement, line: string): void {
+	for (const { kind, text } of tokenizeSlashLine(line)) {
+		if (kind === 'whitespace') {
+			lineEl.appendText(text);
+			continue;
+		}
+		const cls =
+			kind === 'beat'
+				? 'song-slash__tok song-slash__tok--beat'
+				: kind === 'bar'
+					? 'song-slash__tok song-slash__tok--bar'
+					: 'song-slash__tok song-slash__tok--chord';
+		lineEl.createSpan({ cls }).setText(text);
+	}
+}
+
+/** Slash notation: staff + slashes when parsable; else same-line text fallback. */
 function renderSlashBlock(el: HTMLElement, source: string): void {
 	const root = el.createDiv({ cls: 'song-slash' });
 	const body = root.createDiv({ cls: 'song-slash__body' });
@@ -194,8 +212,15 @@ function renderSlashBlock(el: HTMLElement, source: string): void {
 			body.createDiv({ cls: 'song-slash__line song-slash__line--empty' });
 			continue;
 		}
-		const lineEl = body.createDiv({ cls: 'song-slash__line' });
-		lineEl.setText(mapRhythmAsciiLine(raw));
+		const line = unescapeSmfText(raw);
+		const measures = parseSlashStaffLine(line);
+		if (measures.length > 0) {
+			const wrap = body.createDiv({ cls: 'song-slash__staff-wrap' });
+			wrap.appendChild(createSlashStaffSvg(measures, line));
+		} else {
+			const lineEl = body.createDiv({ cls: 'song-slash__line song-slash__line--fallback' });
+			appendSlashLine(lineEl, line);
+		}
 	}
 }
 

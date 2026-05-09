@@ -8,7 +8,7 @@ An Obsidian community plugin that renders **Song Markdown Format (SMF) v2.0** in
 | ------------ | ------- |
 | **`chordpro`** | ChordPro-style `[G]` lines with **chords above lyrics**, aligned per syllable or chord-only beats |
 | **`strum`**    | **Line 1** is always the **count**; following lines are ASCII strum strokes rendered as **arrows** |
-| **`slash`**    | Slash rhythm (ASCII); stroke letters `D`/`U`/`X`/`-`/`T` become glyphs like strum; `/` and `\|` stay as written |
+| **`slash`**    | **Slash charts** as an SVG **five-line staff** with slash marks and chords above; measures between `\|`, one `/` per stroke. **`D` stays a chord** (not an arrow). Lines without `/` fall back to plain text. Use **`strum`** for `D`/`U`/… → arrow glyphs |
 
 Escape sequences inside block bodies: `\[`, `\|`, `\!`
 
@@ -50,7 +50,7 @@ D - D U - U D U
 ```
 
 ```slash
-| / / / / |
+| G / G / | Em / Em / | D / D / | G / G / |
 ```
 
 > Performance notes in normal Markdown
@@ -101,7 +101,14 @@ Spaces are preserved for alignment. Extra blank lines become vertical spacing.
 
 ### 5. `slash` blocks
 
-Slash charts: use `/`, bar lines `|`, and optional stroke letters. The same **`D`/`U`/`X`/`-`/`T` → glyph** mapping applies so you can type ASCII and read arrows.
+Slash charts ([slash notation](https://en.wikipedia.org/wiki/Chord_chart#Slash_notation)):
+
+- **Measures** are separated by `|` (optional at the ends). Example: `| G / G / | Em / Em / |`.
+- Each **`/`** is one rhythmic slash on the staff. A **chord token** (e.g. `G`, `Em`, `Bb`, `F#m7`) applies to the **next** slash until another chord appears (`G / G /` → two slashes, both labeled `G`).
+- The block is drawn as **SVG**: staff lines, treble clef, **4/4** time signature (layout constant for now), bar lines at measure ends, `b`/`#` shown as **♭** / **♯** when they follow a letter (`Bb` → B♭).
+- After escapes (`\|`, `\[`, `\!`), lines that contain **no `/`** are shown as **styled text** (fallback).
+
+For **strum arrows** from ASCII **`D` / `U` / …**, use a **`strum`** block instead.
 
 ### 6. Escapes (inside fenced bodies)
 
