@@ -31,9 +31,10 @@ function addStaffLines(svg: SVGSVGElement, x0: number, x1: number): void {
 }
 
 function appendSlashGlyph(svg: SVGSVGElement, cx: number): void {
-	const t = STAFF_TOP + LINE_GAP * 0.4;
-	const b = STAFF_TOP + LINE_GAP * (STAFF_LINE_COUNT - 1.4);
-	const dx = 10; // More horizontal spread for forward slash angle
+	// Span middle 3 lines: line 1 (second from top) to line 3 (second from bottom)
+	const t = STAFF_TOP + LINE_GAP * 1; // Second line from top
+	const b = STAFF_TOP + LINE_GAP * 3; // Second line from bottom
+	const dx = 10; // Horizontal spread for forward slash angle
 	const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
 	path.setAttribute('d', `M ${cx - dx} ${b} L ${cx + dx} ${t}`);
 	path.setAttribute('stroke', 'currentColor');
