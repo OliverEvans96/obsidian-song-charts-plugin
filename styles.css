@@ -1,8 +1,55 @@
-/*
+.song-chord {
+	display: inline-block;
+	margin-inline: 0.08em;
+	padding: 0 0.3em;
+	border-radius: 4px;
+	background: var(--background-modifier-hover);
+	color: var(--text-accent);
+	font-family: var(--font-monospace);
+	font-size: 0.9em;
+	font-weight: 600;
+}
 
-This CSS file will be included with your plugin, and
-available in the app when your plugin is enabled.
+.song-directive {
+	display: flex;
+	align-items: baseline;
+	gap: 0.45rem;
+	padding: 0.4rem 0.55rem;
+	margin-block: 0.25rem;
+	border-radius: 6px;
+	background: var(--background-secondary);
+	font-family: var(--font-monospace);
+}
 
-If your plugin does not need CSS, delete this file.
+.song-directive__label {
+	text-transform: uppercase;
+	letter-spacing: 0.03em;
+	font-size: 0.75em;
+	color: var(--text-muted);
+}
 
-*/
+.song-directive__value {
+	white-space: pre-wrap;
+	color: var(--text-normal);
+}
+
+.song-repeat {
+	display: grid;
+	gap: 0.2rem;
+	padding: 0.5rem 0.6rem;
+	border-inline-start: 2px solid var(--interactive-accent);
+	background: var(--background-primary-alt);
+	border-radius: 0 6px 6px 0;
+}
+
+.song-repeat__line {
+	font-family: var(--font-text);
+}
+
+.song-repeat__line--empty {
+	min-height: 0.7rem;
+}
+
+.song-repeat__line--shorthand {
+	font-style: italic;
+}

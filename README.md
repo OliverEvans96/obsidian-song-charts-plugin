@@ -1,90 +1,443 @@
-# Obsidian Sample Plugin
+# Song Charts for Obsidian
 
-This is a sample plugin for Obsidian (https://obsidian.md).
+An Obsidian community plugin that renders **Song Markdown Format (SMF) v2.0** syntax in Reading view.
 
-This project uses TypeScript to provide type checking and documentation.
-The repo depends on the latest plugin API (obsidian.d.ts) in TypeScript Definition format, which contains TSDoc comments describing what it does.
+## What this plugin renders
 
-This sample plugin demonstrates some of the basic functionality the plugin API can do.
-- Adds a ribbon icon, which shows a Notice when clicked.
-- Adds a command "Open modal (simple)" which opens a Modal.
-- Adds a plugin setting tab to the settings page.
-- Registers a global click event and output 'click' to the console.
-- Registers a global interval which logs 'setInterval' to the console.
+- Inline chords: `[G]Hello [D]world`
+- Inline directives:
+  - `!strum: D - D U - U D U`
+  - `!slash: | / / / / |`
+  - `!count: 1 & 2 & 3 & 4 &`
+- Repeat regions with pipe prefixes:
+  - `| ...`
+  - nested `| | ...`
+  - shorthand `|: ... :|`
+- Fenced blocks:
+  - ```` ```strum ``` ````
+  - ```` ```slash ``` ````
+  - ```` ```count ``` ````
+- Escape sequences:
+  - `\[`, `\|`, `\!`
 
-## First time developing plugins?
+The source file remains valid Markdown with YAML frontmatter support unchanged.
 
-Quick starting guide for new plugin devs:
+## Development
 
-- Check if [someone already developed a plugin for what you want](https://obsidian.md/plugins)! There might be an existing plugin similar enough that you can partner up with.
-- Make a copy of this repo as a template with the "Use this template" button (login to GitHub if you don't see it).
-- Clone your repo to a local development folder. For convenience, you can place this folder in your `.obsidian/plugins/your-plugin-name` folder.
-- Install NodeJS, then run `npm i` in the command line under your repo folder.
-- Run `npm run dev` to compile your plugin from `main.ts` to `main.js`.
-- Make changes to `main.ts` (or create new `.ts` files). Those changes should be automatically compiled into `main.js`.
-- Reload Obsidian to load the new version of your plugin.
-- Enable plugin in settings window.
-- For updates to the Obsidian API run `npm update` in the command line under your repo folder.
-
-## Releasing new releases
-
-- Update your `manifest.json` with your new version number, such as `1.0.1`, and the minimum Obsidian version required for your latest release.
-- Update your `versions.json` file with `"new-plugin-version": "minimum-obsidian-version"` so older versions of Obsidian can download an older version of your plugin that's compatible.
-- Create new GitHub release using your new version number as the "Tag version". Use the exact version number, don't include a prefix `v`. See here for an example: https://github.com/obsidianmd/obsidian-sample-plugin/releases
-- Upload the files `manifest.json`, `main.js`, `styles.css` as binary attachments. Note: The manifest.json file must be in two places, first the root path of your repository and also in the release.
-- Publish the release.
-
-> You can simplify the version bump process by running `npm version patch`, `npm version minor` or `npm version major` after updating `minAppVersion` manually in `manifest.json`.
-> The command will bump version in `manifest.json` and `package.json`, and add the entry for the new version to `versions.json`
-
-## Adding your plugin to the community plugin list
-
-- Check the [plugin guidelines](https://docs.obsidian.md/Plugins/Releasing/Plugin+guidelines).
-- Publish an initial version.
-- Make sure you have a `README.md` file in the root of your repo.
-- Make a pull request at https://github.com/obsidianmd/obsidian-releases to add your plugin.
-
-## How to use
-
-- Clone this repo.
-- Make sure your NodeJS is at least v16 (`node --version`).
-- `npm i` or `yarn` to install dependencies.
-- `npm run dev` to start compilation in watch mode.
-
-## Manually installing the plugin
-
-- Copy over `main.js`, `styles.css`, `manifest.json` to your vault `VaultFolder/.obsidian/plugins/your-plugin-id/`.
-
-## Improve code quality with eslint
-- [ESLint](https://eslint.org/) is a tool that analyzes your code to quickly find problems. You can run ESLint against your plugin to find common bugs and ways to improve your code. 
-- This project already has eslint preconfigured, you can invoke a check by running`npm run lint`
-- Together with a custom eslint [plugin](https://github.com/obsidianmd/eslint-plugin) for Obsidan specific code guidelines.
-- A GitHub action is preconfigured to automatically lint every commit on all branches.
-
-## Funding URL
-
-You can include funding URLs where people who use your plugin can financially support it.
-
-The simple way is to set the `fundingUrl` field to your link in your `manifest.json` file:
-
-```json
-{
-    "fundingUrl": "https://buymeacoffee.com"
-}
+```bash
+npm install
+npm run lint
+npm run test
+npm run build
 ```
 
-If you have multiple URLs, you can also do:
+## Manual testing in Obsidian
 
-```json
-{
-    "fundingUrl": {
-        "Buy Me a Coffee": "https://buymeacoffee.com",
-        "GitHub Sponsor": "https://github.com/sponsors",
-        "Patreon": "https://www.patreon.com/"
-    }
-}
+1. Build the plugin: `npm run build`
+2. Copy `main.js`, `manifest.json`, and `styles.css` into:
+   - `<Vault>/.obsidian/plugins/obsidian-song-charts-plugin/`
+3. Reload Obsidian and enable **Song Charts** in **Settings → Community plugins**.
+
+## Example
+
+```md
+---
+title: Example Song
+artist: Demo
+tempo: 100
+---
+
+# Verse
+
+| # Verse 1
+| [G]Hello [D]world
+| [C]This is simple
+|
+
+!strum: D D U U D U
+
+[C]Sing it loud
+[G]Sing it proud
+
+> Let it ring
 ```
 
-## API Documentation
+## Song Markdown Format (SMF) v2.0 — Full specification
 
-See https://docs.obsidian.md
+A Markdown-compatible format for song sheets with:
+
+- YAML frontmatter metadata
+- inline chords (ChordPro-style)
+- strumming notation (DUX-style, unnamed externally)
+- slash rhythm notation
+- repeatable sections via Markdown-native markers
+- notes + hints
+- optional fenced music blocks for structured rhythm data
+
+It is a **strict subset of Markdown** with a few defined extensions.
+
+---
+
+### 1. File Structure
+
+A valid SMF file is standard Markdown:
+
+```text
+---
+(frontmatter YAML)
+---
+
+(markdown body)
+```
+
+Everything outside frontmatter is Markdown text.
+
+---
+
+### 2. Frontmatter (YAML only)
+
+Standard YAML block.
+
+```yaml
+---
+title: Fast Car
+artist: Tracy Chapman
+tempo: 104
+time: 4/4
+key: C
+capo: 2
+tuning: standard
+---
+```
+
+Rules:
+
+- valid YAML only
+- no custom syntax allowed
+- all metadata is optional
+
+---
+
+### 3. Markdown Base Layer
+
+SMF is fully valid Markdown:
+
+- headings
+- paragraphs
+- blockquotes
+- lists
+
+Example:
+
+```md
+# Verse 1
+
+This is a normal paragraph.
+```
+
+---
+
+### 4. Chords (Inline Only)
+
+ChordPro-style inline chords:
+
+```md
+[G]Hello darkness my old [D]friend
+```
+
+Rules:
+
+- chords appear in `[...]`
+- attach to next lyric fragment
+- multiple chords per line allowed
+
+Chord-only lines allowed:
+
+```md
+[G]   [D]   [Em]   [C]
+```
+
+---
+
+### 5. Strumming Notation (Inline Convention)
+
+Strumming is represented as **inline monospaced text or fenced line starting with `!strum:`**.
+
+#### 5.1 Inline form (preferred for simplicity)
+
+```md
+!strum: D - D U - U D U
+```
+
+#### 5.2 Meaning
+
+| Symbol | Meaning    |
+| ------ | ---------- |
+| D      | downstroke |
+| U      | upstroke   |
+| X      | muted hit  |
+| -      | rest       |
+| T      | tap / percussion |
+
+Rules:
+
+- spacing is visual only
+- timing is implied by alignment or context
+
+---
+
+### 6. Slash Rhythm Notation
+
+Used for traditional chart feel.
+
+Inline directive form:
+
+```md
+!slash: | / / / / |
+```
+
+Or directional:
+
+```md
+!slash: | ↓ ↓ ↑ ↑ ↓ ↑ |
+```
+
+Rules:
+
+- must be inside a `!slash:` line
+- bar symbols optional but recommended
+
+---
+
+### 7. Count Guide (Optional)
+
+```md
+!count: 1 & 2 & 3 & 4 &
+```
+
+Used for alignment reference only.
+
+---
+
+### 8. Notes
+
+Standard Markdown blockquote:
+
+```md
+> Play softly here
+> Build into chorus
+```
+
+Rules:
+
+- purely informational
+- ignored by playback engines unless explicitly interpreted
+
+---
+
+### 9. Sections
+
+Standard Markdown headings:
+
+```md
+# Intro
+# Verse 1
+## Pre-Chorus
+# Chorus
+```
+
+No custom section syntax.
+
+---
+
+### 10. Repeat System (Markdown-native)
+
+Repeats are expressed using **blockquote-style structural bars (`|`)**.
+
+This is the only structural extension to Markdown.
+
+#### 10.1 Basic Repeat Block
+
+```md
+| # Verse 1
+| [G]Hello [D]world
+| [C]Another line
+|
+```
+
+Meaning:
+
+- `|` prefixes define a repeatable region
+- blank `|` ends region
+- region is repeated based on optional directive or default behavior
+
+#### 10.2 Repeat Count
+
+Placed immediately after header or inside block:
+
+```md
+| # Chorus
+| repeat: 2
+| [C]Sing it loud
+| [G]Sing it proud
+|
+```
+
+#### 10.3 Nested Repeats
+
+Indentation determines nesting:
+
+```md
+| # Section
+| | [G]Outer line
+| | [D]Outer line
+| |
+| | # Inner repeat
+| | | [C]Inner A
+| | | [D]Inner B
+| | |
+```
+
+Rules:
+
+- each leading `|` = one nesting level
+- inner blocks repeat independently
+
+#### 10.4 Alternative shorthand repeat
+
+```md
+|: [G]Hello [D]world :|
+```
+
+Equivalent to a repeat block.
+
+---
+
+### 11. Fenced Music Blocks (Optional, structured data)
+
+Only used when structure is needed.
+
+#### 11.1 Strumming block
+
+````text
+```strum
+D - D U - U D U
+```
+````
+
+#### 11.2 Slash block
+
+````text
+```slash
+| ↓ ↓ ↑ ↑ ↓ ↑ |
+```
+````
+
+#### 11.3 Count block
+
+````text
+```count
+1 & 2 & 3 & 4 &
+```
+````
+
+Rules:
+
+- fenced blocks are optional
+- inline forms are preferred
+- blocks are for tooling / UI rendering
+
+---
+
+### 12. Line Processing Rules
+
+Order of interpretation:
+
+1. YAML frontmatter
+2. Markdown structure
+3. repeat regions (`|`)
+4. inline chords
+5. inline directives (`!strum`, `!slash`, `!count`)
+6. notes (`>`)
+7. fenced blocks
+
+---
+
+### 13. Semantics of Repeat Regions
+
+A repeat region:
+
+- begins with `|`
+- ends with blank `|`
+- may contain nested `|`
+- expands logically before rendering
+
+No required runtime behavior; expansion is UI-defined.
+
+---
+
+### 14. Escape Rules
+
+Inside lyric text:
+
+| Sequence | Meaning |
+| -------- | ------- |
+| `\[ ]`   | literal chord brackets |
+| `\|`     | literal pipe |
+| `\!`     | literal directive |
+
+---
+
+### 15. Minimal Example
+
+```yaml
+---
+title: Example Song
+artist: Demo
+tempo: 100
+---
+```
+
+```md
+# Verse
+
+| # Verse 1
+| [G]Hello [D]world
+| [C]This is simple
+|
+```
+
+```md
+# Chorus
+
+!strum: D D U U D U
+
+[C]Sing it loud
+[G]Sing it proud
+
+> Let it ring
+```
+
+---
+
+### 16. Design Principles
+
+- Markdown is the base language (no fork)
+- YAML only for metadata
+- no hidden syntax layers
+- repetition uses visual structure, not new grammar
+- inline-first design (blocks are optional)
+- readable without parser
+- parseable without ambiguity
+
+---
+
+### 17. Non-Goals
+
+This format explicitly avoids:
+
+- separate DSLs
+- non-Markdown files
+- required AST tooling
+- binary or encoded structures
+- hidden state machines

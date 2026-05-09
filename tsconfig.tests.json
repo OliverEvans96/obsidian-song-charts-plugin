@@ -1,0 +1,15 @@
+{
+	"extends": "./tsconfig.json",
+	"compilerOptions": {
+		"module": "ESNext",
+		"target": "es2020",
+		"outDir": "build-tests",
+		"declaration": false,
+		"inlineSourceMap": false,
+		"inlineSources": false
+	},
+	"include": [
+		"src/smf.ts",
+		"tests/**/*.ts"
+	]
+}
