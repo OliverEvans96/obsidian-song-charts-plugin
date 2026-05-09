@@ -126,12 +126,12 @@ export function createSlashStaffSvg(
 		const start = measureStarts[mi];
 		const m = measures[mi];
 		if (start === undefined || !m) continue;
-		
+
 		let prevChord: string | null = null;
 		for (let bi = 0; bi < m.beats.length; bi++) {
 			const beat = m.beats[bi];
 			if (!beat?.chord) continue;
-			
+
 			// Only show chord if it's different from the previous beat
 			if (beat.chord !== prevChord) {
 				const cx = start + (bi + 0.5) * beatW;
@@ -143,7 +143,7 @@ export function createSlashStaffSvg(
 				chordEl.textContent = formatSlashChordDisplay(beat.chord);
 				svg.appendChild(chordEl);
 			}
-			
+
 			prevChord = beat.chord;
 		}
 	}
