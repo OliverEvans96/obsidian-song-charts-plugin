@@ -9,6 +9,7 @@ import {
 	unescapeSmfText
 } from './smf';
 import { createSlashStaffSvg } from './slash-staff';
+import { slashStaffSvgWidth } from './slash-staff-layout';
 
 /** Chord-only lines split into columns (one chord per beat cell). */
 function expandChordOnlyBeatColumns(segments: ChordproSegment[]): ChordproSegment[] {
@@ -208,20 +209,46 @@ function renderSlashBlock(el: HTMLElement, source: string): void {
 	const root = el.createDiv({ cls: 'song-slash' });
 	const body = root.createDiv({ cls: 'song-slash__body' });
 
+	type SlashRow =
+		| { kind: 'empty' }
+		| { kind: 'staff'; line: string; measures: ReturnType<typeof parseSlashStaffLine> }
+		| { kind: 'fallback'; line: string };
+
+	const rows: SlashRow[] = [];
 	for (const raw of source.split(/\r?\n/)) {
 		if (!raw.trim()) {
-			body.createDiv({ cls: 'song-slash__line song-slash__line--empty' });
+			rows.push({ kind: 'empty' });
 			continue;
 		}
 		const line = unescapeSmfText(raw);
 		const measures = parseSlashStaffLine(line);
 		if (measures.length > 0) {
-			const wrap = body.createDiv({ cls: 'song-slash__staff-wrap' });
-			wrap.appendChild(createSlashStaffSvg(measures, line));
+			rows.push({ kind: 'staff', line, measures });
 		} else {
-			const lineEl = body.createDiv({ cls: 'song-slash__line song-slash__line--fallback' });
-			appendSlashLine(lineEl, line);
+			rows.push({ kind: 'fallback', line });
 		}
+	}
+
+	let maxStaffSvgWidth = 0;
+	for (const row of rows) {
+		if (row.kind === 'staff') {
+			maxStaffSvgWidth = Math.max(maxStaffSvgWidth, slashStaffSvgWidth(row.measures));
+		}
+	}
+	const staffWidthOpts = maxStaffSvgWidth > 0 ? { minSvgWidth: maxStaffSvgWidth } : undefined;
+
+	for (const row of rows) {
+		if (row.kind === 'empty') {
+			body.createDiv({ cls: 'song-slash__line song-slash__line--empty' });
+			continue;
+		}
+		if (row.kind === 'staff') {
+			const wrap = body.createDiv({ cls: 'song-slash__staff-wrap' });
+			wrap.appendChild(createSlashStaffSvg(row.measures, row.line, staffWidthOpts));
+			continue;
+		}
+		const lineEl = body.createDiv({ cls: 'song-slash__line song-slash__line--fallback' });
+		appendSlashLine(lineEl, row.line);
 	}
 }
 

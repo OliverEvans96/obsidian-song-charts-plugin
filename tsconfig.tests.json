@@ -9,5 +9,11 @@
 		"inlineSources": false,
 		"sourceMap": true
 	},
-	"include": ["src/smf.ts", "tests/**/*.ts"]
+	"include": [
+		"src/smf.ts",
+		"src/slash-staff-layout.ts",
+		"src/smf-editor-decorations.ts",
+		"src/smf-editor-fence-scan.ts",
+		"tests/**/*.ts"
+	]
 }

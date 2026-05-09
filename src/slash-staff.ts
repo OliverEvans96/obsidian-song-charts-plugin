@@ -1,11 +1,9 @@
 import type { SlashStaffMeasure } from './smf';
+import { layoutSlashStaff } from './slash-staff-layout';
 
 const STAFF_LINE_COUNT = 5;
 const LINE_GAP = 9;
 const STAFF_TOP = 36;
-const TIME_SIG_SLOT = 32;
-const BEAT_MIN_W = 40;
-const END_MARGIN = 14;
 const CHORD_PAD_TOP = 7;
 const STAFF_STROKE = 1.15;
 const SLASH_STROKE = 2.8;
@@ -59,10 +57,20 @@ function appendBarLine(svg: SVGSVGElement, x: number): void {
 	svg.appendChild(line);
 }
 
+export type CreateSlashStaffSvgOptions = {
+	/** When set, viewBox width is at least this value so CSS width:100% scales all rows uniformly. */
+	minSvgWidth?: number;
+};
+
 export function createSlashStaffSvg(
 	measures: SlashStaffMeasure[],
-	ariaLabel: string
+	ariaLabel: string,
+	options?: CreateSlashStaffSvgOptions
 ): SVGSVGElement {
+	const layout = layoutSlashStaff(measures);
+	const width = Math.max(layout.svgWidth, options?.minSvgWidth ?? layout.svgWidth);
+	const { contentLeft, staffRight, beatW, height, measureStarts, slashXs } = layout;
+
 	const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
 	svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
 	svg.setAttribute('role', 'img');
@@ -70,24 +78,6 @@ export function createSlashStaffSvg(
 		svg.setAttribute('aria-label', `Slash notation: ${ariaLabel}`);
 	}
 	svg.classList.add('song-slash-staff');
-
-	const contentLeft = TIME_SIG_SLOT;
-	const beatW = BEAT_MIN_W;
-	let cursor = contentLeft;
-	const measureStarts: number[] = [];
-	const slashXs: number[] = [];
-
-	for (const m of measures) {
-		measureStarts.push(cursor);
-		for (let i = 0; i < m.beats.length; i++) {
-			slashXs.push(cursor + (i + 0.5) * beatW);
-		}
-		cursor += m.beats.length * beatW;
-	}
-
-	const staffRight = cursor;
-	const width = Math.max(140, staffRight + END_MARGIN + 8);
-	const height = STAFF_TOP + (STAFF_LINE_COUNT - 1) * LINE_GAP + 20;
 
 	svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
 	svg.setAttribute('preserveAspectRatio', 'xMinYMid meet');
