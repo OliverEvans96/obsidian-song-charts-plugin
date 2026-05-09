@@ -21,8 +21,8 @@ D - D U - U D U
 
 # Intro
 
-```chordpro
-[G] [G] [Em] [Em] [D] [D] [G] [G]
+```slash
+| G / G / | Em / Em / | D / D / | G / G / |
 ```
 
 ---
