@@ -4,6 +4,7 @@ import {
 	lineToChordproSegments,
 	mapRhythmAsciiLine,
 	mapRhythmSymbol,
+	mapStrumStroke,
 	parseInlineChords,
 	parseSlashStaffLine,
 	tokenizeSlashLine,
@@ -55,6 +56,19 @@ test('mapRhythmSymbol maps strum letters', () => {
 	assert.equal(mapRhythmSymbol('X'), '✕');
 	assert.equal(mapRhythmSymbol('-'), '·');
 	assert.equal(mapRhythmSymbol('/'), '/');
+});
+
+test('mapStrumStroke uses lowercase for normal-sized strokes and uppercase for large', () => {
+	assert.deepEqual(mapStrumStroke('d'), { glyph: '↓', size: 'normal' });
+	assert.deepEqual(mapStrumStroke('D'), { glyph: '↓', size: 'large' });
+	assert.deepEqual(mapStrumStroke('u'), { glyph: '↑', size: 'normal' });
+	assert.deepEqual(mapStrumStroke('U'), { glyph: '↑', size: 'large' });
+	assert.deepEqual(mapStrumStroke('x'), { glyph: '✕', size: 'normal' });
+	assert.deepEqual(mapStrumStroke('X'), { glyph: '✕', size: 'large' });
+	assert.deepEqual(mapStrumStroke('t'), { glyph: '⊤', size: 'normal' });
+	assert.deepEqual(mapStrumStroke('T'), { glyph: '⊤', size: 'large' });
+	assert.deepEqual(mapStrumStroke('-'), { glyph: '·', size: 'normal' });
+	assert.deepEqual(mapStrumStroke(' '), { glyph: ' ', size: 'normal' });
 });
 
 test('parseSlashStaffLine splits measures and maps chords to slashes', () => {

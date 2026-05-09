@@ -7,8 +7,8 @@ An Obsidian community plugin that renders **Song Markdown Format (SMF) v2.0** in
 | Block tag    | Purpose |
 | ------------ | ------- |
 | **`chordpro`** | ChordPro-style `[G]` lines with **chords above lyrics**, aligned per syllable or chord-only beats |
-| **`strum`**    | **Line 1** is always the **count**; following lines are ASCII strum strokes rendered as **arrows** |
-| **`slash`**    | **Slash charts** as an SVG **five-line staff** with slash marks and chords above; measures between `\|`, one `/` per stroke. **`D` stays a chord** (not an arrow). Lines without `/` fall back to plain text. Use **`strum`** for `D`/`U`/… → arrow glyphs |
+| **`strum`**    | **Line 1** is always the **count**; following lines are ASCII strokes (**lowercase** = normal size, **uppercase** = larger **d**/**u** arrows and **x**/**t** glyphs) |
+| **`slash`**    | **Slash charts** as an SVG **five-line staff** with slash marks and chords above; measures between `\|`, one `/` per stroke. **`D` stays a chord** (not an arrow). Lines without `/` fall back to plain text. Use **`strum`** for `d`/`D`/`u`/`U`/… stroke glyphs |
 
 Escape sequences inside block bodies: `\[`, `\|`, `\!`
 
@@ -87,15 +87,15 @@ Body = one lyric line per row (newline-separated). Chords use `[Name]` immediate
 ### 4. `strum` blocks
 
 - **First line (required):** count string, e.g. `1 & 2 & 3 & 4 &`. Shown as the subdivision guide.
-- **Following lines:** ASCII pattern. Characters are mapped when rendered:
+- **Following lines:** ASCII pattern. Characters are mapped when rendered. **Lowercase** stroke letters draw the usual size; **uppercase** draws a **larger** glyph (accented beats).
 
 | ASCII | Shown as |
 | ----- | -------- |
-| `D`   | ↓ (down) |
-| `U`   | ↑ (up)   |
-| `X`   | ✕        |
+| `d` / `D` | ↓ (down); `D` is larger |
+| `u` / `U` | ↑ (up); `U` is larger |
+| `x` / `X` | ✕; `X` is larger |
 | `-`   | · (rest) |
-| `T`   | ⊤ (tap)  |
+| `t` / `T` | ⊤ (tap); `T` is larger |
 
 Spaces are preserved for alignment. Extra blank lines become vertical spacing.
 
@@ -111,7 +111,7 @@ Slash charts ([slash notation](https://en.wikipedia.org/wiki/Chord_chart#Slash_n
 - The block is drawn as **SVG**: staff lines, treble clef, **4/4** time signature (layout constant for now), bar lines at measure ends, `b`/`#` shown as **♭** / **♯** when they follow a letter (`Bb` → B♭).
 - After escapes (`\|`, `\[`, `\!`), lines that contain **no `/`** are shown as **styled text** (fallback).
 
-For **strum arrows** from ASCII **`D` / `U` / …**, use a **`strum`** block instead.
+For **strum pattern** glyphs from ASCII **`d` / `D` / `u` / `U` / …**, use a **`strum`** block instead.
 
 ### 6. Escapes (inside fenced bodies)
 

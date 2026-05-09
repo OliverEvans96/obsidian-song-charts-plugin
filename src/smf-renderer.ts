@@ -1,11 +1,12 @@
 import { Plugin } from 'obsidian';
 import {
 	lineToChordproSegments,
-	mapRhythmSymbol,
+	mapStrumStroke,
 	parseInlineChords,
 	parseSlashStaffLine,
 	tokenizeSlashLine,
 	type ChordproSegment,
+	type StrumStrokeMapping,
 	unescapeSmfText
 } from './smf';
 import { createSlashStaffSvg } from './slash-staff';
@@ -95,7 +96,14 @@ function strumArrowSvg(direction: 'down' | 'up'): SVGSVGElement {
 	return svg;
 }
 
-function appendStrumGlyphCell(cell: HTMLElement, mapped: string): void {
+function appendStrumGlyphCell(
+	cell: HTMLElement,
+	mapped: string,
+	size: StrumStrokeMapping['size']
+): void {
+	if (size === 'large') {
+		cell.addClass('song-strum__cell--stroke-lg');
+	}
 	if (mapped === '↓') {
 		cell.addClass('song-strum__cell--glyph');
 		cell.appendChild(strumArrowSvg('down'));
@@ -118,7 +126,20 @@ function padStrumColumns(chars: string[], targetLen: number, padChar: string): s
 	return out;
 }
 
-/** Line 1 = count; remaining lines = ASCII strum pattern (D/U/X/-/T → glyphs). */
+const STRUM_PAD_STROKE: StrumStrokeMapping = { glyph: STRUM_PAD, size: 'normal' };
+
+function padStrumStrokeColumns(
+	rows: StrumStrokeMapping[],
+	targetLen: number
+): StrumStrokeMapping[] {
+	const out = rows.slice();
+	while (out.length < targetLen) {
+		out.push(STRUM_PAD_STROKE);
+	}
+	return out;
+}
+
+/** Line 1 = count; remaining lines = ASCII strum pattern (d/D, u/U, x/X, t/T, - → glyphs; case sets size). */
 function renderStrumBlock(el: HTMLElement, source: string): void {
 	const lines = source.split(/\r?\n/);
 	const root = el.createDiv({ cls: 'song-strum' });
@@ -132,7 +153,7 @@ function renderStrumBlock(el: HTMLElement, source: string): void {
 	const countLine = unescapeSmfText(lines[0].trim());
 	const countChars = [...countLine];
 
-	type PatternRow = { kind: 'blank' } | { kind: 'pattern'; glyphs: string[] };
+	type PatternRow = { kind: 'blank' } | { kind: 'pattern'; strokes: StrumStrokeMapping[] };
 
 	const patternRows: PatternRow[] = [];
 	for (const raw of lines.slice(1)) {
@@ -141,15 +162,15 @@ function renderStrumBlock(el: HTMLElement, source: string): void {
 			continue;
 		}
 		const sourceLine = unescapeSmfText(raw);
-		const glyphs: string[] = [];
+		const strokes: StrumStrokeMapping[] = [];
 		for (const ch of sourceLine) {
-			glyphs.push(mapRhythmSymbol(ch));
+			strokes.push(mapStrumStroke(ch));
 		}
-		patternRows.push({ kind: 'pattern', glyphs });
+		patternRows.push({ kind: 'pattern', strokes });
 	}
 
 	const longestPattern = patternRows.reduce((max, row) => {
-		return row.kind === 'pattern' ? Math.max(max, row.glyphs.length) : max;
+		return row.kind === 'pattern' ? Math.max(max, row.strokes.length) : max;
 	}, 0);
 	const numCols = Math.max(countChars.length, longestPattern);
 
@@ -176,14 +197,14 @@ function renderStrumBlock(el: HTMLElement, source: string): void {
 			continue;
 		}
 		const patternRow = grid.createDiv({ cls: 'song-strum__row song-strum__row--pattern' });
-		const padded = padStrumColumns(row.glyphs, numCols, STRUM_PAD);
+		const padded = padStrumStrokeColumns(row.strokes, numCols);
 		for (let i = 0; i < numCols; i++) {
-			const g = padded[i] ?? STRUM_PAD;
+			const s = padded[i] ?? STRUM_PAD_STROKE;
 			const cell = patternRow.createSpan({ cls: 'song-strum__cell' });
-			if (g === STRUM_PAD) {
+			if (s.glyph === STRUM_PAD) {
 				cell.addClass('song-strum__cell--pad');
 			}
-			appendStrumGlyphCell(cell, g);
+			appendStrumGlyphCell(cell, s.glyph, s.size);
 		}
 	}
 }

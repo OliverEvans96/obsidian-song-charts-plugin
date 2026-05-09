@@ -111,23 +111,38 @@ export function lineToChordproSegments(line: string): ChordproSegment[] {
 	return segments;
 }
 
+/** Stroke display for strum blocks: glyph and visual weight (letter case in ASCII). */
+export type StrumStrokeMapping = { glyph: string; size: 'normal' | 'large' };
+
+/** Maps strum ASCII stroke letters to glyphs; uppercase letters render larger than lowercase. */
+export function mapStrumStroke(ch: string): StrumStrokeMapping {
+	switch (ch) {
+		case 'D':
+			return { glyph: '↓', size: 'large' };
+		case 'd':
+			return { glyph: '↓', size: 'normal' };
+		case 'U':
+			return { glyph: '↑', size: 'large' };
+		case 'u':
+			return { glyph: '↑', size: 'normal' };
+		case 'X':
+			return { glyph: '✕', size: 'large' };
+		case 'x':
+			return { glyph: '✕', size: 'normal' };
+		case 'T':
+			return { glyph: '⊤', size: 'large' };
+		case 't':
+			return { glyph: '⊤', size: 'normal' };
+		case '-':
+			return { glyph: '·', size: 'normal' };
+		default:
+			return { glyph: ch, size: 'normal' };
+	}
+}
+
 /** Maps strum ASCII stroke letters to arrows; spacing and bar characters pass through. */
 export function mapRhythmSymbol(ch: string): string {
-	const u = ch.toUpperCase();
-	switch (u) {
-		case 'D':
-			return '↓';
-		case 'U':
-			return '↑';
-		case 'X':
-			return '✕';
-		case '-':
-			return '·';
-		case 'T':
-			return '⊤';
-		default:
-			return ch;
-	}
+	return mapStrumStroke(ch).glyph;
 }
 
 /** Used for strum pattern rows only; slash blocks render chord lines literally. */

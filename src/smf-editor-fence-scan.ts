@@ -53,7 +53,11 @@ function findClosingFenceAtLineStarts(
 	let lineStart = bodyStart;
 
 	while (lineStart < documentEnd) {
-		const { lineBreakStart, lineEndExclusive } = lineSliceBounds(source, lineStart, documentEnd);
+		const { lineBreakStart, lineEndExclusive } = lineSliceBounds(
+			source,
+			lineStart,
+			documentEnd
+		);
 		const content = source.slice(lineStart, lineBreakStart).trimEnd();
 		if (/^`{3,}\s*$/.test(content.trim())) {
 			return { bodyTo: lineStart, resume: lineEndExclusive };
@@ -81,9 +85,17 @@ export function findSmfFenceRegions(source: string): SmfFenceRegion[] {
 			continue;
 		}
 
-		const { lineBreakStart: openBreak, lineEndExclusive: afterOpenLine } = lineSliceBounds(source, i, n);
+		const { lineBreakStart: openBreak, lineEndExclusive: afterOpenLine } = lineSliceBounds(
+			source,
+			i,
+			n
+		);
 		const infoRaw = source.slice(i + 3, openBreak).trim();
-		const firstToken = infoRaw.split(/\s+/u).filter((t) => t.length > 0)[0]?.toLowerCase() ?? '';
+		const firstToken =
+			infoRaw
+				.split(/\s+/u)
+				.filter((t) => t.length > 0)[0]
+				?.toLowerCase() ?? '';
 		const bodyStart = Math.min(afterOpenLine, n);
 
 		const close = findClosingFenceAtLineStarts(source, bodyStart, n);

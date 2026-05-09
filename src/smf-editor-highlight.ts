@@ -48,5 +48,5 @@ const smFenceViewPlugin = ViewPlugin.fromClass(
 
 /** Highlights chordpro/strum/slash fenced bodies in the editor buffer (parallel to nested languages like Python). */
 export function smfEditorFenceHighlight(): Extension {
-	return Prec.high(smFenceViewPlugin);
+	return Prec.highest(smFenceViewPlugin);
 }
