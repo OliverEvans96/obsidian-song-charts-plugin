@@ -104,7 +104,10 @@ Spaces are preserved for alignment. Extra blank lines become vertical spacing.
 Slash charts ([slash notation](https://en.wikipedia.org/wiki/Chord_chart#Slash_notation)):
 
 - **Measures** are separated by `|` (optional at the ends). Example: `| G / G / | Em / Em / |`.
-- Each **`/`** is one rhythmic slash on the staff. A **chord token** (e.g. `G`, `Em`, `Bb`, `F#m7`) applies to the **next** slash until another chord appears (`G / G /` → two slashes, both labeled `G`).
+- Each **`/`** is one rhythmic slash on the staff. A **chord token** (e.g. `G`, `Em`, `Bb`, `F#m7`) **itself counts as beat 1** and applies to subsequent slashes until another chord appears.
+  - `G / /` = 3 beats (chord G on beat 1, plus 2 more slashes labeled G)
+  - `| G / / / |` = 4 beats in 4/4 (standard notation)
+  - `G / G /` = 4 beats (G on beat 1, slash on beat 2, G on beat 3, slash on beat 4)
 - The block is drawn as **SVG**: staff lines, treble clef, **4/4** time signature (layout constant for now), bar lines at measure ends, `b`/`#` shown as **♭** / **♯** when they follow a letter (`Bb` → B♭).
 - After escapes (`\|`, `\[`, `\!`), lines that contain **no `/`** are shown as **styled text** (fallback).
 
