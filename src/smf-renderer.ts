@@ -2,6 +2,7 @@ import { Plugin } from 'obsidian';
 import {
 	lineToChordproSegments,
 	mapRhythmAsciiLine,
+	mapRhythmSymbol,
 	parseInlineChords,
 	type ChordproSegment,
 	unescapeSmfText
@@ -64,6 +65,53 @@ function renderChordproBlock(el: HTMLElement, source: string): void {
 	}
 }
 
+const STRUM_PAD = '\u00a0';
+
+function strumArrowSvg(direction: 'down' | 'up'): SVGSVGElement {
+	const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+	svg.setAttribute('viewBox', '0 0 16 16');
+	svg.setAttribute('width', '1em');
+	svg.setAttribute('height', '1em');
+	svg.classList.add('song-strum__arrow-svg');
+	svg.setAttribute('aria-hidden', 'true');
+	const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+	path.setAttribute('fill', 'none');
+	path.setAttribute('stroke', 'currentColor');
+	path.setAttribute('stroke-width', '1.75');
+	path.setAttribute('stroke-linecap', 'round');
+	path.setAttribute('stroke-linejoin', 'round');
+	if (direction === 'down') {
+		path.setAttribute('d', 'M8 3v9M4.2 9.2L8 13l3.8-3.8');
+	} else {
+		path.setAttribute('d', 'M8 13V4M4.2 6.8L8 3l3.8 3.8');
+	}
+	svg.appendChild(path);
+	return svg;
+}
+
+function appendStrumGlyphCell(cell: HTMLElement, mapped: string): void {
+	if (mapped === '↓') {
+		cell.addClass('song-strum__cell--glyph');
+		cell.appendChild(strumArrowSvg('down'));
+		return;
+	}
+	if (mapped === '↑') {
+		cell.addClass('song-strum__cell--glyph');
+		cell.appendChild(strumArrowSvg('up'));
+		return;
+	}
+	cell.setText(mapped);
+}
+
+/** Pad with NBSP so every row shares the same column count as the count line. */
+function padStrumColumns(chars: string[], targetLen: number, padChar: string): string[] {
+	const out = chars.slice();
+	while (out.length < targetLen) {
+		out.push(padChar);
+	}
+	return out;
+}
+
 /** Line 1 = count; remaining lines = ASCII strum pattern (D/U/X/-/T → glyphs). */
 function renderStrumBlock(el: HTMLElement, source: string): void {
 	const lines = source.split(/\r?\n/);
@@ -75,16 +123,64 @@ function renderStrumBlock(el: HTMLElement, source: string): void {
 		return;
 	}
 
-	const countEl = root.createDiv({ cls: 'song-strum__count' });
-	countEl.setText(lines[0].trim());
+	const countLine = unescapeSmfText(lines[0].trim());
+	const countChars = [...countLine];
 
+	type PatternRow =
+		| { kind: 'blank' }
+		| { kind: 'pattern'; glyphs: string[] };
+
+	const patternRows: PatternRow[] = [];
 	for (const raw of lines.slice(1)) {
 		if (!raw.trim()) {
-			root.createDiv({ cls: 'song-strum__pattern song-strum__pattern--empty' });
+			patternRows.push({ kind: 'blank' });
 			continue;
 		}
-		const patternEl = root.createDiv({ cls: 'song-strum__pattern' });
-		patternEl.setText(mapRhythmAsciiLine(raw));
+		const sourceLine = unescapeSmfText(raw);
+		const glyphs: string[] = [];
+		for (const ch of sourceLine) {
+			glyphs.push(mapRhythmSymbol(ch));
+		}
+		patternRows.push({ kind: 'pattern', glyphs });
+	}
+
+	const longestPattern = patternRows.reduce((max, row) => {
+		return row.kind === 'pattern' ? Math.max(max, row.glyphs.length) : max;
+	}, 0);
+	const numCols = Math.max(countChars.length, longestPattern);
+
+	const grid = root.createDiv({ cls: 'song-strum__grid' });
+	grid.style.setProperty('--strum-cols', String(numCols));
+
+	const countCells = padStrumColumns(countChars, numCols, STRUM_PAD);
+	const countRow = grid.createDiv({ cls: 'song-strum__row song-strum__row--count' });
+	for (let i = 0; i < numCols; i++) {
+		const ch = countCells[i] ?? STRUM_PAD;
+		const cell = countRow.createSpan({ cls: 'song-strum__cell' });
+		if (/^[1-9]$/.test(ch)) {
+			cell.addClass('song-strum__cell--pulse');
+		}
+		if (ch === STRUM_PAD) {
+			cell.addClass('song-strum__cell--pad');
+		}
+		cell.setText(ch === STRUM_PAD ? STRUM_PAD : ch);
+	}
+
+	for (const row of patternRows) {
+		if (row.kind === 'blank') {
+			grid.createDiv({ cls: 'song-strum__gap' });
+			continue;
+		}
+		const patternRow = grid.createDiv({ cls: 'song-strum__row song-strum__row--pattern' });
+		const padded = padStrumColumns(row.glyphs, numCols, STRUM_PAD);
+		for (let i = 0; i < numCols; i++) {
+			const g = padded[i] ?? STRUM_PAD;
+			const cell = patternRow.createSpan({ cls: 'song-strum__cell' });
+			if (g === STRUM_PAD) {
+				cell.addClass('song-strum__cell--pad');
+			}
+			appendStrumGlyphCell(cell, g);
+		}
 	}
 }
 
