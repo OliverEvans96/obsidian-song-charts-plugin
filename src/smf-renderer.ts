@@ -37,12 +37,19 @@ function renderRepeatBlock(container: HTMLElement): boolean {
 		return false;
 	}
 
-	const parsedLines = lines.map((line) => parseRepeatLine(line));
-	if (parsedLines.some((line) => line === null)) {
-		if (!lines.every((line) => isShorthandRepeat(line))) {
-			return false;
+	const isRepeatRegion = lines.every((line) => {
+		if (line.trim().length === 0) {
+			return true;
 		}
+
+		return parseRepeatLine(line) !== null || isShorthandRepeat(line);
+	});
+
+	if (!isRepeatRegion) {
+		return false;
 	}
+
+	const parsedLines = lines.map((line) => parseRepeatLine(line));
 
 	container.empty();
 	container.addClass('song-repeat');
@@ -108,7 +115,7 @@ function renderInlineChords(container: HTMLElement): void {
 		}
 
 		const text = current.nodeValue ?? '';
-		if (!text.includes('[') && !text.includes('\\')) {
+		if (!/[[\\]/.test(text)) {
 			continue;
 		}
 

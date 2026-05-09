@@ -15,8 +15,8 @@ export function unescapeSmfText(value: string): string {
 	let output = '';
 
 	for (let i = 0; i < value.length; i++) {
-		const current = value[i];
-		const next = value[i + 1];
+		const current = value.charAt(i);
+		const next = value.charAt(i + 1);
 
 		if (current === '\\' && next && ESCAPABLE.has(next)) {
 			output += next;
@@ -42,8 +42,8 @@ export function parseInlineChords(input: string): SmfInlineToken[] {
 	};
 
 	for (let i = 0; i < input.length; i++) {
-		const current = input[i];
-		const next = input[i + 1];
+		const current = input.charAt(i);
+		const next = input.charAt(i + 1);
 
 		if (current === '\\' && next && ESCAPABLE.has(next)) {
 			currentText += next;
@@ -57,7 +57,7 @@ export function parseInlineChords(input: string): SmfInlineToken[] {
 		}
 
 		const end = input.indexOf(']', i + 1);
-		if (end <= i + 1) {
+		if (end === -1 || end === i + 1) {
 			currentText += current;
 			continue;
 		}
@@ -108,7 +108,7 @@ export function parseRepeatLine(line: string): SmfRepeatLine | null {
 		index++;
 	}
 
-	if (line[index] !== '|') {
+	if (index >= line.length || line[index] !== '|') {
 		return null;
 	}
 

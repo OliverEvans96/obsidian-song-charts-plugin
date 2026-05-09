@@ -25,6 +25,13 @@ test('parseInlineChords preserves escaped brackets as literals', () => {
 	]);
 });
 
+test('parseInlineChords handles unmatched and empty brackets as plain text', () => {
+	assert.deepEqual(parseInlineChords('[G]ok [] bad [missing'), [
+		{ type: 'chord', value: 'G' },
+		{ type: 'text', value: 'ok [] bad [missing' }
+	]);
+});
+
 test('parseDirectiveLine parses supported inline directives', () => {
 	assert.deepEqual(parseDirectiveLine('!strum: D - D U - U D U'), {
 		type: 'strum',
@@ -42,6 +49,10 @@ test('parseDirectiveLine parses supported inline directives', () => {
 
 test('parseDirectiveLine ignores escaped directives', () => {
 	assert.equal(parseDirectiveLine('\\!strum: D U D U'), null);
+	assert.deepEqual(parseDirectiveLine('!count: 1 \\& 2 \\! 3'), {
+		type: 'count',
+		value: '1 \\& 2 ! 3'
+	});
 });
 
 test('parseRepeatLine parses nesting levels from leading pipes', () => {
@@ -57,6 +68,10 @@ test('parseRepeatLine parses nesting levels from leading pipes', () => {
 		level: 1,
 		content: ''
 	});
+	assert.deepEqual(parseRepeatLine('| \\| literal \\! value'), {
+		level: 1,
+		content: '| literal ! value'
+	});
 });
 
 test('repeat shorthand is recognized', () => {
@@ -66,4 +81,8 @@ test('repeat shorthand is recognized', () => {
 
 test('unescapeSmfText handles escaped control characters', () => {
 	assert.equal(unescapeSmfText('\\!literal \\|pipe \\[brackets\\]'), '!literal |pipe [brackets]');
+});
+
+test('unescapeSmfText handles consecutive escapes', () => {
+	assert.equal(unescapeSmfText('\\\\[C]'), '\\[C]');
 });
